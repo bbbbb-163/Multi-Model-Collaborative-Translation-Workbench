@@ -1,0 +1,51 @@
+{
+  "name": "model-workbench",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "tsx watch server/index.ts",
+    "build": "tsc --noEmit && vite build && npm run build:server",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start": "node build/server/index.js --production",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:deploy": "python -m unittest discover -s tests -p test_auto_deploy.py -v",
+    "audit:repo": "python scripts/audit-repository.py",
+    "test:browser": "npm run build && tsx tests/browser.ts && tsx tests/mstar-browser.ts && tsx tests/input-confirmation-browser.ts && tsx tests/admin-password-browser.ts",
+    "test:production": "npm run build && node tests/production-smoke.mjs",
+    "format": "prettier --write src server shared tests *.json *.ts *.md"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.90",
+    "@ai-sdk/google": "4.0.107",
+    "@ai-sdk/openai": "4.0.104",
+    "@ai-sdk/openai-compatible": "3.0.80",
+    "ai": "7.0.155",
+    "express": "5.3.0",
+    "lucide-react": "1.63.0",
+    "multer": "2.5.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
+    "undici": "^7.30.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/express": "5.0.6",
+    "@types/multer": "2.3.0",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  }
+}

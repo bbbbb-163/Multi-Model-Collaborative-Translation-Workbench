@@ -1,0 +1,11 @@
+{
+  "repository": "REPLACE_OWNER/REPLACE_REPO",
+  "repository_id": 0,
+  "remote": "git@gitee.com:REPLACE_OWNER/REPLACE_REPO.git",
+  "public_health": "https://mstar.chat/api/health",
+  "project_dir": "/opt/mstar",
+  "min_available_mb": 896,
+  "min_disk_mb": 4096,
+  "backup_keep": 3,
+  "backup_max_age_days": 14
+}

@@ -1,0 +1,77 @@
+name: mstar
+
+services:
+  workbench:
+    image: ${APP_IMAGE:-mstar-workbench:initial}
+    build:
+      context: .
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:24-bookworm-slim}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    environment:
+      NODE_ENV: production
+      PORT: "3210"
+      WORKBENCH_HOST: 0.0.0.0
+      WORKBENCH_ORIGIN: https://${DOMAIN:?Copy .env.example to .env and set DOMAIN}
+      WORKBENCH_TRUST_PROXY: 172.30.42.2
+      WORKBENCH_DATA: /app/.data
+      WORKBENCH_MAX_STORAGE_MB: ${WORKBENCH_MAX_STORAGE_MB:-1024}
+      WORKBENCH_MAX_RUNS_PER_OWNER: ${WORKBENCH_MAX_RUNS_PER_OWNER:-3}
+      WORKBENCH_MAX_TOTAL_RUNS: ${WORKBENCH_MAX_TOTAL_RUNS:-24}
+    volumes:
+      - type: bind
+        source: ${WORKBENCH_DATA_DIR:-./runtime/data}
+        target: /app/.data
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 256
+    networks:
+      web:
+        ipv4_address: 172.30.42.3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:2-alpine}
+    restart: unless-stopped
+    depends_on:
+      workbench:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?Copy .env.example to .env and set DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      web:
+        ipv4_address: 172.30.42.2
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  web:
+    ipam:
+      config:
+        - subnet: 172.30.42.0/24
+
+volumes:
+  caddy_data:
+  caddy_config:

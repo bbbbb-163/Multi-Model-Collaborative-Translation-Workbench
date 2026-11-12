@@ -1,0 +1,22 @@
+{
+	admin off
+}
+
+{$DOMAIN} {
+	# Up to ten 40 MiB files plus multipart overhead. App enforces each limit.
+	request_body {
+		max_size 420MB
+	}
+
+	reverse_proxy workbench:3210 {
+		# Preserve the public host. Caddy replaces untrusted forwarding headers by default.
+		header_up Host {http.request.host}
+		flush_interval -1
+		transport http {
+			dial_timeout 10s
+			response_header_timeout 30m
+			read_timeout 30m
+			write_timeout 30m
+		}
+	}
+}

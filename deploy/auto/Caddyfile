@@ -1,0 +1,33 @@
+{
+	admin off
+}
+
+{$DOMAIN} {
+	handle /__gitee_deploy {
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy unix//run/mstar-hook/hook.sock {
+			transport http {
+				dial_timeout 2s
+				response_header_timeout 10s
+			}
+		}
+	}
+
+	handle {
+		request_body {
+			max_size 420MB
+		}
+		reverse_proxy workbench:3210 {
+			header_up Host {http.request.host}
+			flush_interval -1
+			transport http {
+				dial_timeout 10s
+				response_header_timeout 30m
+				read_timeout 30m
+				write_timeout 30m
+			}
+		}
+	}
+}

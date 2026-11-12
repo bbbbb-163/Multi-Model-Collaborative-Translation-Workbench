@@ -1,0 +1,30 @@
+# syntax=docker/dockerfile:1
+# Installed as root-owned infrastructure. Candidate Dockerfiles are never used.
+ARG NODE_IMAGE=node:24-bookworm-slim
+FROM ${NODE_IMAGE} AS build
+ENV NODE_OPTIONS=--max-old-space-size=384
+WORKDIR /app
+COPY --chown=0:0 --chmod=0644 package.json package-lock.json ./
+RUN npm ci --registry=https://registry.npmjs.org
+COPY . .
+RUN ./node_modules/.bin/tsx --test --test-concurrency=1 tests/*.test.ts \
+    && npm run build && node tests/production-smoke.mjs
+
+FROM ${NODE_IMAGE} AS runtime
+ARG COMMIT_SHA
+LABEL org.opencontainers.image.revision=${COMMIT_SHA} io.mstar.autodeploy=true
+ENV NODE_ENV=production PORT=3210 WORKBENCH_HOST=0.0.0.0 WORKBENCH_DATA=/app/.data
+WORKDIR /app
+COPY --chown=0:0 --chmod=0644 package.json package-lock.json ./
+RUN npm ci --omit=dev --registry=https://registry.npmjs.org \
+    && npm cache clean --force && mkdir -p /app/.data && chown node:node /app/.data
+COPY --from=build --chown=0:0 /app/build ./build
+COPY --from=build --chown=0:0 /app/dist ./dist
+# Do not change the host umask or the permissions of database/key mounts.
+RUN chmod -R u=rwX,go=rX /app/build /app/dist /app/node_modules
+USER node
+RUN node -e "const f=require('node:fs');if(process.getuid()!==1000)throw Error('Expected node UID');for(const p of ['package.json','package-lock.json','build/server/index.js','dist/index.html'])f.accessSync(p,f.constants.R_OK)"
+EXPOSE 3210
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
+    CMD node -e "fetch('http://127.0.0.1:3210/api/health',{signal:AbortSignal.timeout(4000)}).then(async r=>{if(!r.ok||!(await r.json()).ok)process.exit(1)}).catch(()=>process.exit(1))"
+CMD ["node", "build/server/index.js", "--production"]

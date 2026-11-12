@@ -1,0 +1,42 @@
+[Unit]
+Description=Mstar authenticated Gitee webhook inbox (no Docker access)
+After=local-fs.target
+
+[Service]
+Type=simple
+User=mstar-hook
+Group=mstar-hook
+ExecStart=/usr/bin/python3 -I /usr/local/lib/mstar-deploy/receiver_entry.py
+WorkingDirectory=/var/lib/mstar-hook
+RuntimeDirectory=mstar-hook
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+StateDirectory=mstar-hook
+StateDirectoryMode=0700
+UMask=0007
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+InaccessiblePaths=-/run/docker.sock -/var/run/docker.sock /opt/mstar /var/lib/mstar-deploy
+ReadOnlyPaths=/etc/mstar-deploy /usr/local/lib/mstar-deploy
+MemoryMax=96M
+TasksMax=16
+LimitNOFILE=128
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mstar-hook
+LogRateLimitIntervalSec=60s
+LogRateLimitBurst=180
+
+[Install]
+WantedBy=multi-user.target

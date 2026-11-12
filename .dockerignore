@@ -1,0 +1,16 @@
+# Build context is an allowlist. Local credentials and data never enter a layer.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.server.json
+!vite.config.ts
+!index.html
+!src/
+!src/**
+!server/
+!server/**
+!shared/
+!shared/**
+!tests/
+!tests/**

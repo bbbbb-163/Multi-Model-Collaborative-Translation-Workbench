@@ -1,0 +1,32 @@
+[Unit]
+Description=Mstar serialized Docker deployment worker
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+ConditionPathExists=/var/lib/mstar-deploy/state.json
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+StateDirectory=mstar-deploy/docker
+StateDirectoryMode=0700
+Environment=DOCKER_CONFIG=/var/lib/mstar-deploy/docker
+Environment=BUILDX_CONFIG=/var/lib/mstar-deploy/docker/buildx
+ExecStart=/usr/bin/python3 -I /usr/local/lib/mstar-deploy/worker_entry.py tick
+ExecStopPost=/usr/bin/python3 -I /usr/local/lib/mstar-deploy/worker_entry.py rescue
+TimeoutStartSec=45min
+TimeoutStopSec=240
+KillMode=control-group
+Nice=10
+CPUWeight=20
+MemoryMax=256M
+TasksMax=64
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mstar-deploy
+LogRateLimitIntervalSec=60s
+LogRateLimitBurst=500
